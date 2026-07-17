@@ -1,0 +1,12 @@
+.vs/
+__pycache__/
+
+build/
+dist/
+
+*.spec
+
+seating.json
+last_seating.json
+
+guest_list.xlsx
