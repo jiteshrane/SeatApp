@@ -429,14 +429,22 @@ class RoomScene(QGraphicsScene):
         # HEAD TABLE
         # -------------------------
         head = Table(
-        "Head Table 1",
-        head_table_seats,
-        "head"
+            "Head Table 1",
+            head_table_seats,
+            "head"
         )
         self.tables.append(head)
 
-        head_x = 300
-        head_y = 80
+        # Match the round-table layout
+        cols = min(4, num_tables)
+        spacing_x = 260
+
+        # Center of the round-table grid
+        left_edge = 150
+        right_edge = left_edge + (cols - 1) * spacing_x
+
+        head_x = (left_edge + right_edge) / 2
+        head_y = -40
 
         self.addItem(HeadTableItem(head, head_x, head_y))
 

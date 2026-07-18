@@ -78,7 +78,6 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Wedding Seating Planner")
-        self.resize(1200, 800)
 
         # Central widget
         central_widget = QWidget()
@@ -102,12 +101,22 @@ class MainWindow(QMainWindow):
         # -------------------------
         # DATA
         # -------------------------
+        # Default guests (fallback)
         self.guests = [
             Guest(0, "John", "Smith"),
             Guest(1, "Jane", "Smith"),
             Guest(2, "Emily", "Jones"),
             Guest(3, "Mike", "Brown")
         ]
+
+        # Auto-load provided guest list if available
+        if os.path.exists("guest_list.xlsx"):
+            print("FOUND guest_list.xlsx - loading guest list")
+
+            self.guests = load_guest_list("guest_list.xlsx")
+
+        else:
+            print("No guest_list.xlsx found - using default guests")
 
         self.selected_guest = None
         self.undo_stack = []
@@ -207,9 +216,26 @@ class MainWindow(QMainWindow):
         print(os.path.abspath("last_seating.json"))
 
         if os.path.exists("seating.json"):
+
             print("AUTO LOADING SAVED FILE")
             self.load_seating("seating.json")
+
+        elif os.path.exists("guest_list.xlsx"):
+
+            print("FIRST RUN - LOADING GUEST LIST")
+
+            self.auto_import_guest_list("guest_list.xlsx")
+
+            self.scene.generate_layout(
+                num_tables=12,
+                seats_per_table=8,
+                head_table_seats=16
+            )
+
+            self.save_seating()
+
         else:
+
             print("NO SAVED FILE FOUND")
 
         self.add_guest_btn.clicked.connect(self.add_guest)
@@ -224,6 +250,8 @@ class MainWindow(QMainWindow):
         )
 
         self.undo_shortcut.activated.connect(self.undo)
+
+        self.showMaximized()
 
     def autosave(self):
 
@@ -324,6 +352,24 @@ class MainWindow(QMainWindow):
         self.guest_list.refreshGuests()
 
         self.statusBar().showMessage(f"Loaded {len(self.guests)} guests")
+
+    def auto_import_guest_list(self, filename="guest_list.xlsx"):
+
+        if not os.path.exists(filename):
+            return False
+
+        print("AUTO LOADING GUEST LIST:", filename)
+
+        self.guests = load_guest_list(filename)
+
+        self.scene.guests = self.guests
+
+        self.guest_list.setGuests(self.guests)
+        self.guest_list.refreshGuests()
+
+        print(f"Loaded {len(self.guests)} guests")
+
+        return True
 
     # =========================
     # SAVE (unchanged)
