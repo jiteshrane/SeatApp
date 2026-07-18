@@ -25,6 +25,14 @@ import os
 from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtGui import QBrush, QColor
 
+import sys
+from pathlib import Path
+
+if getattr(sys, "frozen", False):
+    APP_DIR = Path(sys.executable).parent
+else:
+    APP_DIR = Path(__file__).resolve().parent
+
 # =========================
 # GUEST LIST WIDGET
 # =========================
@@ -110,7 +118,7 @@ class MainWindow(QMainWindow):
         ]
 
         # Auto-load provided guest list if available
-        if os.path.exists("guest_list.xlsx"):
+        if (APP_DIR / "guest_list.xlsx").exists():
             print("FOUND guest_list.xlsx - loading guest list")
 
             self.guests = load_guest_list("guest_list.xlsx")
@@ -208,23 +216,23 @@ class MainWindow(QMainWindow):
 
         load_action = file_menu.addAction("Load Seating")
         load_action.triggered.connect(
-            lambda: self.load_seating("seating.json")
+            lambda: self.load_seating(APP_DIR / "seating.json")
         )
 
                 # Auto-load previous session
         print("Looking for save file at:")
-        print(os.path.abspath("last_seating.json"))
+        print(APP_DIR / "seating.json")
 
-        if os.path.exists("seating.json"):
+        if (APP_DIR / "seating.json").exists():
 
             print("AUTO LOADING SAVED FILE")
-            self.load_seating("seating.json")
+            self.load_seating(APP_DIR / "seating.json")
 
-        elif os.path.exists("guest_list.xlsx"):
+        elif (APP_DIR / "guest_list.xlsx").exists():
 
             print("FIRST RUN - LOADING GUEST LIST")
 
-            self.auto_import_guest_list("guest_list.xlsx")
+            self.auto_import_guest_list(APP_DIR / "guest_list.xlsx")
 
             self.scene.generate_layout(
                 num_tables=12,
@@ -374,9 +382,10 @@ class MainWindow(QMainWindow):
     # =========================
     # SAVE (unchanged)
     # =========================
-    def save_seating(self, checked=False, filename="last_seating.json"):
+    def save_seating(self, checked=False, filename=None):
 
-        filename = "seating.json"
+        if filename is None:
+            filename = APP_DIR / "seating.json"
 
         import json
 
@@ -422,7 +431,10 @@ class MainWindow(QMainWindow):
         # LOAD (unchanged)
         # =========================
 
-    def load_seating(self, filename="seating.json"):
+    def load_seating(self, filename=None):
+
+        if filename is None:
+            filename = APP_DIR / "seating.json"
 
         import json
 
