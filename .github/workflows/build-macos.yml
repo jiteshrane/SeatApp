@@ -30,8 +30,13 @@ jobs:
           --name SeatApp \
           main.py
 
+    - name: Package app
+      run: |
+        cd dist
+        zip -r SeatApp-macOS.zip SeatApp.app
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: SeatApp-macOS
-        path: dist/SeatApp.app
+        path: dist/SeatApp-macOS.zip
