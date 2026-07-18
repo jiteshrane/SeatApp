@@ -6,10 +6,9 @@ Welcome to SeatApp! This application makes it easy to plan and organize wedding 
 
 ## Getting Started
 
-1. Extract all files from the ZIP into the same folder.
-2. Double-click **SeatApp.exe**.
-3. If a **guest_list.xlsx** file is included, it will be loaded automatically.
-4. If a **seating.json** file is included, your previous seating arrangement will be restored automatically.
+1. Double-click **SeatApp.exe**.
+2. If a **guest_list.xlsx** file is included, it will be loaded automatically.
+3. If a **seating.json** file is included, your previous seating arrangement will be restored automatically.
 
 ---
 
