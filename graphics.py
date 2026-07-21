@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QGraphicsTextItem
 )
 from models import Table
-
+from PySide6.QtCore import QTimer
 # =========================
 # SEAT ITEM
 # =========================
@@ -444,7 +444,7 @@ class RoomScene(QGraphicsScene):
         right_edge = left_edge + (cols - 1) * spacing_x
 
         head_x = (left_edge + right_edge) / 2
-        head_y = -40
+        head_y = 100
 
         self.addItem(HeadTableItem(head, head_x, head_y))
 
@@ -464,13 +464,16 @@ class RoomScene(QGraphicsScene):
             row = i // cols
 
             x = 150 + col * spacing_x
-            y = 150 + row * spacing_y
+            y = 290 + row * spacing_y
 
             table_item = RoundTableItem(table, x, y)
             self.addItem(table_item)
 
-            # -------------------------
-            # SEATS (IMPORTANT FIX)
-            # seats are created INSIDE RoundTableItem
-            # DO NOT create them here
-            # -------------------------
+        rect = self.itemsBoundingRect()
+
+        rect = self.itemsBoundingRect().adjusted(-100, -100, 100, 100)
+
+        self.setSceneRect(rect)
+
+        for view in self.views():
+            view.setSceneRect(rect)

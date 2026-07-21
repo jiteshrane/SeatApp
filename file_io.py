@@ -1,14 +1,13 @@
 import pandas as pd
 from models import Guest
+from pathlib import Path
 
 
 def load_guest_list(filename):
-    """
-    Load guests from an Excel or CSV file.
-    Returns a list of Guest objects.
-    """
 
-    if filename.lower().endswith(".csv"):
+    filename = Path(filename)
+
+    if filename.suffix.lower() == ".csv":
         df = pd.read_csv(filename)
     else:
         df = pd.read_excel(filename)

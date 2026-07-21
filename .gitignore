@@ -10,3 +10,12 @@ seating.json
 last_seating.json
 
 guest_list.xlsx
+
+*.zip
+*.exe
+*.dmg
+
+SeatApp_v1.0.0_Mac/
+SeatApp_v1.0.0_Windows/
+
+*.app

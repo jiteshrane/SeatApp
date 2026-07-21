@@ -15,7 +15,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtWidgets import QMessageBox
 from PySide6.QtGui import QPainter, QDrag
-from PySide6.QtCore import Qt, QMimeData
+from PySide6.QtCore import Qt, QMimeData, QEvent
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QSizePolicy
 
 from graphics import RoomScene
 from file_io import load_guest_list
@@ -76,6 +78,32 @@ class GuestListWidget(QListWidget):
         drag.setMimeData(mime)
         drag.exec(Qt.MoveAction)
 
+class ZoomGraphicsView(QGraphicsView):
+
+    def __init__(self, scene):
+        super().__init__(scene)
+
+        print("USING ZOOM GRAPHICS VIEW")
+
+    def wheelEvent(self, event):
+
+        if event.modifiers() & Qt.ControlModifier:
+
+            if event.angleDelta().y() > 0:
+                self.scale(1.2, 1.2)
+                self.main_window.zoom_factor *= 1.2
+
+            else:
+                self.scale(0.8, 0.8)
+                self.main_window.zoom_factor *= 0.8
+
+            self.main_window.update_zoom_label()
+
+            event.accept()
+
+        else:
+            super().wheelEvent(event)
+
 
 # =========================
 # MAIN WINDOW
@@ -90,6 +118,7 @@ class MainWindow(QMainWindow):
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
+        #self.showMaximized()
 
         layout = QHBoxLayout()
         central_widget.setLayout(layout)
@@ -102,10 +131,19 @@ class MainWindow(QMainWindow):
         self.scene = RoomScene()
         self.scene.main_window = self
         self.scene.guest_list = self.guest_list
+        self.zoom_factor = 1.0
 
-        self.view = QGraphicsView(self.scene)
+        self.view = ZoomGraphicsView(self.scene)
+        self.view.main_window = self
         self.view.setRenderHint(QPainter.Antialiasing)
+        print("Scale:", self.view.transform().m11(), self.view.transform().m22())
+        self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
+        self.view.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Expanding
+        )
         # -------------------------
         # DATA
         # -------------------------
@@ -150,6 +188,15 @@ class MainWindow(QMainWindow):
         self.edit_guest_btn = QPushButton("Edit Guest")
         self.delete_guest_btn = QPushButton("Delete Guest")
 
+        self.zoom_in_btn = QPushButton("Zoom In")
+        self.zoom_out_btn = QPushButton("Zoom Out")
+
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
+
+        left_layout.addWidget(self.zoom_in_btn)
+        left_layout.addWidget(self.zoom_out_btn)
+
         self.undo_btn = QPushButton("Undo")
 
         left_layout.addWidget(self.undo_btn)
@@ -193,7 +240,45 @@ class MainWindow(QMainWindow):
         # RIGHT PANEL (scene)
         # -------------------------
         layout.addWidget(left_panel, 1)
-        layout.addWidget(self.view, 3)
+        layout.addWidget(left_panel, 1)
+
+        # -------------------------
+        # VIEW AREA WITH ZOOM BUTTONS
+        # -------------------------
+        view_container = QWidget()
+        view_layout = QVBoxLayout(view_container)
+        view_layout.setContentsMargins(0, 0, 0, 0)
+        # Zoom controls
+        zoom_bar = QHBoxLayout()
+
+        self.zoom_label = QLabel("Zoom: 100%")
+        zoom_bar.addWidget(self.zoom_label)
+
+        self.zoom_out_btn = QPushButton("-")
+        self.zoom_in_btn = QPushButton("+")
+
+        self.reset_zoom_btn = QPushButton("Reset")
+        self.reset_zoom_btn.setFixedSize(60, 30)
+
+        zoom_bar.addWidget(self.reset_zoom_btn)
+
+        self.reset_zoom_btn.clicked.connect(self.reset_zoom)
+
+        self.zoom_out_btn.setFixedSize(35, 30)
+        self.zoom_in_btn.setFixedSize(35, 30)
+
+        zoom_bar.addWidget(self.zoom_out_btn)
+        zoom_bar.addWidget(self.zoom_in_btn)
+
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
+
+        zoom_bar.addStretch()
+
+        view_layout.addLayout(zoom_bar)
+        view_layout.addWidget(self.view)
+
+        layout.addWidget(view_container, 3)
 
         # -------------------------
         # STATUS BAR
@@ -260,6 +345,35 @@ class MainWindow(QMainWindow):
         self.undo_shortcut.activated.connect(self.undo)
 
         self.showMaximized()
+
+    def reset_zoom(self):
+        self.view.fitInView(
+            self.scene.sceneRect(),
+            Qt.KeepAspectRatio
+        )
+
+        self.zoom_factor = 1.0
+        self.update_zoom_label()
+
+    def refresh_view(self):
+        self.view.setSceneRect(self.scene.sceneRect())
+        self.view.updateGeometry()
+        self.view.viewport().update()
+
+    def zoom_in(self):
+        self.view.scale(1.2, 1.2)
+        self.zoom_factor *= 1.2
+        self.update_zoom_label()
+
+
+    def zoom_out(self):
+        self.view.scale(0.8, 0.8)
+        self.zoom_factor *= 0.8
+        self.update_zoom_label()
+
+    def update_zoom_label(self):
+        percent = int(self.zoom_factor * 100)
+        self.zoom_label.setText(f"Zoom: {percent}%")
 
     def autosave(self):
 
@@ -634,14 +748,9 @@ class MainWindow(QMainWindow):
                     )
 
 
-        from PySide6.QtCore import QTimer
-
-        QTimer.singleShot(
-            100,
-            lambda: self.scene.update()
-        )
-
         print("LOAD COMPLETE")
+        print("VIEWPORT SIZE:", self.view.viewport().size())
+        print("SCENE SIZE:", self.scene.sceneRect().size())
 
 
     def add_guest(self):
