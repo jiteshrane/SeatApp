@@ -1,4 +1,4 @@
-name: Build macOS App
+name: Build macOS App (High Sierra)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 jobs:
   build-macos:
 
-    runs-on: macos-latest
+    runs-on: macos-11
 
     steps:
 
@@ -21,22 +21,26 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install PySide6 pandas openpyxl pyinstaller
+        pip install pyinstaller==5.13.2
+        pip install PySide6==6.4.3
+        pip install pandas==2.0.3
+        pip install openpyxl
 
     - name: Build app
       run: |
         pyinstaller \
           --windowed \
           --name SeatApp \
+          --target-architecture x86_64 \
           main.py
 
     - name: Package app
       run: |
         cd dist
-        zip -r SeatApp-macOS.zip SeatApp.app
+        zip -r SeatApp-macOS-HighSierra.zip SeatApp.app
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: SeatApp-macOS
-        path: dist/SeatApp-macOS.zip
+        name: SeatApp-macOS-HighSierra
+        path: dist/SeatApp-macOS-HighSierra.zip
